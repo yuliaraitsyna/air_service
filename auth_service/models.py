@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, DateTime, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from enum import Enum as PyEnum
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 from database import Base
 
@@ -17,5 +17,5 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     name = Column(String, nullable=False)
     surname = Column(String, nullable=False)
-    role = Column(Enum(Role), default=Role.passenger)
-    created_at = Column(DateTime, default=datetime.timezone.utc)
+    role = Column(Enum(Role, native_enum=False), default=Role.passenger.value)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
