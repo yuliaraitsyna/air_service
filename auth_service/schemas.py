@@ -19,3 +19,7 @@ class UserResponse(BaseModel):
     name: str
     username: str
     role: Role
+    
+class UserLoginRequest(BaseModel):
+    username: str
+    password: str
