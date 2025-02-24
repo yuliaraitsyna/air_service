@@ -6,3 +6,5 @@ python-dotenv
 pydantic
 passlib
 dotenv
+python-jose
+jwt
