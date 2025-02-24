@@ -2,6 +2,9 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import text
+
 import os
 
 load_dotenv()
@@ -18,3 +21,13 @@ def get_db():
         yield db
     finally:
         db.close()
+        
+def check_db_connection():
+    db = SessionLocal()
+    try:
+        with db.begin():
+            db.execute(text("SELECT 1"))
+        return True
+    except SQLAlchemyError as e:
+        print(f"Database connection error: {e}")
+        return False
