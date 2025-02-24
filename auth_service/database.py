@@ -21,13 +21,3 @@ def get_db():
         yield db
     finally:
         db.close()
-        
-def check_db_connection():
-    db = SessionLocal()
-    try:
-        with db.begin():
-            db.execute(text("SELECT 1"))
-        return True
-    except SQLAlchemyError as e:
-        print(f"Database connection error: {e}")
-        return False
