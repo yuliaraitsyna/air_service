@@ -5,11 +5,14 @@ from database import get_db
 from sqlalchemy.orm import Session
 from fastapi import FastAPI, Depends, HTTPException, status
 from crud import create_user, get_user_by_username
-from security import create_access_token, verify_password
+from security import create_access_token, decode_access_token, verify_password
+from fastapi.security import OAuth2PasswordBearer
 
 get_db()
 
 app = FastAPI()
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 @app.get("/")
 def init():
@@ -41,3 +44,5 @@ def login(request: schemas.UserLoginRequest, db: Session = Depends(get_db)):
         "access_token": access_token,
         "token_type": "bearer"
     }
+
+    
