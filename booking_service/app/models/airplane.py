@@ -1,5 +1,5 @@
 from sqlalchemy import CheckConstraint, Column, Integer, String
-from booking_service.app.core.database import Base
+from app.core.database import Base
 
 
 class Airplane(Base):

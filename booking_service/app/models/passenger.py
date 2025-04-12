@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, TIMESTAMP, Date
-from booking_service.app.core.database import Base
+from app.core.database import Base
 
 class Passenger(Base):
     __tablename__ = "passengers"

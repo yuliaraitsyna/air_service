@@ -1,6 +1,6 @@
 from sqlalchemy import CheckConstraint, Column, DateTime, Integer, String, ForeignKey, TIMESTAMP, DECIMAL
 from sqlalchemy.orm import relationship
-from booking_service.app.core.database import Base
+from app.core.database import Base
 
 class Flight(Base):
     __tablename__ = "flights"
