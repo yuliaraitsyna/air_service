@@ -1,15 +1,5 @@
-from pydantic import BaseModel
-
-class AirportBase(BaseModel):
-    name: str
-    code: str
-    city: str
-    country: str
-    
-    class Config:
-        orm_mode = True
-    
-from pydantic import BaseModel, field_validator, Optional
+from pydantic import BaseModel, field_validator
+from typing import Optional
 
 class AirportBase(BaseModel):
     name: str
@@ -44,3 +34,13 @@ class AirportDelete(BaseModel):
     
     class Config:
         orm_mode = True  
+
+class AirportResponse(BaseModel):
+    id: int
+    name: str
+    code: str
+    city: str
+    country: str
+
+    class Config:
+        orm_mode = True
