@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from app.models.user import User
-from app.schemas.user import UserCreate
+from app.models.user import UserCreate
 from app.core.security import hash_password, verify_password
 from app.core.jwt import create_access_token
 from datetime import timedelta
