@@ -1,24 +1,38 @@
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import timedelta
+import os
+from typing import Annotated
+from fastapi import APIRouter, Depends, Form, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from app.schemas.user import Login, UserCreate, Token, UserResponse
-from app.services.auth import register_user, authenticate_user, create_auth_token
+from app.schemas.user import Token, UserResponse
+from app.services.auth import get_current_user, register_user, authenticate_user
 from app.core.database import get_db
-from app.models.user import User
+from app.core.jwt import create_access_token
 
 router = APIRouter()
+ACCESS_TOKEN_EXPIRE_MINUTES = 15
 
 @router.post("/register", response_model=UserResponse)
-def register(user_data: UserCreate, db: Session = Depends(get_db)):
-    existing_user = db.query(User).filter(User.email == user_data.email).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    return register_user(db, user_data)
+def register(
+    username: str = Form(...), 
+    email: str = Form(...), 
+    password: str = Form(...), 
+    db: Session = Depends(get_db)
+):
+    return register_user(db, username, email, password)
 
 @router.post("/login", response_model=Token)
-def login(user_data: Login, db: Session = Depends(get_db)):
-    user = authenticate_user(db, user_data.username, user_data.password)
+def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Annotated[Session, Depends(get_db)]):
+    user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    access_token = create_auth_token(user)
+    access_token = create_access_token(user.username, user.id, timedelta(minutes=20))
     return {"access_token": access_token, "token_type": "bearer"}
+
+@router.get("/check", response_model=UserResponse)
+def auth_check(current_user: Annotated[dict,  Depends(get_current_user)]):
+    if current_user is None:
+        raise HTTPException(status_code=401, detail="Authentication failed")
+    return  current_user
+    

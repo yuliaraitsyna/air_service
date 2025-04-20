@@ -1,15 +1,20 @@
 import os
-from dotenv import load_dotenv
+from typing import Annotated
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from app.models.user import User
-from app.schemas.user import UserCreate
-from app.core.security import hash_password, verify_password
-from app.core.jwt import create_access_token
-from datetime import timedelta
-from fastapi import HTTPException, status
+from fastapi import Depends, HTTPException, status
+from jose import JWTError, jwt
 
-load_dotenv()
+from app.core.database import get_db
+from app.core.security import hash_password, verify_password
+
+
+oauth2_bearer = OAuth2PasswordBearer(tokenUrl="/auth/login")
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
 
 class UserAlreadyExistsException(HTTPException):
     def __init__(self):
@@ -23,17 +28,18 @@ class DatabaseErrorException(HTTPException):
     def __init__(self, detail="Database error occurred"):
         super().__init__(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=detail)
 
-def register_user(db: Session, user_data: UserCreate):
+
+def register_user(db: Session, username: str, email: str, password: str, role: str = 'user'):
     try:
-        existing_user = db.query(User).filter(User.email == user_data.email).first()
+        existing_user = db.query(User).filter(User.email == email).first()
         if existing_user:
             raise UserAlreadyExistsException()
 
         user = User(
-            username=user_data.username,
-            email=user_data.email,
-            password=hash_password(user_data.password),
-            role=user_data.role
+            username=username,
+            email=email,
+            password=hash_password(password),
+            role=role
         )
         
         db.add(user)
@@ -48,6 +54,7 @@ def register_user(db: Session, user_data: UserCreate):
         db.rollback()
         raise DatabaseErrorException(detail=str(e))
 
+
 def authenticate_user(db: Session, username: str, password: str):
     try:
         user = db.query(User).filter(User.username == username).first()
@@ -59,8 +66,27 @@ def authenticate_user(db: Session, username: str, password: str):
     except Exception as e:
         raise DatabaseErrorException(detail=str(e))
 
-def create_auth_token(user: User):
+
+def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
     try:
-        return create_access_token({"sub": user.username}, timedelta(minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))))
-    except Exception as e:
-        raise DatabaseErrorException(detail="Error while generating JWT token.")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        user_id: int = payload.get("id")
+        
+        if username is None or user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+        return {"username" : username, "user_id": user_id}
+    except (JWTError, ValueError):
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+
+def require_role(required_roles: list[str]):
+    def role_checker(current_user: User = Depends(get_current_user)):
+        if current_user.role not in required_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have access to this resource."
+            )
+        return current_user
+    return role_checker
