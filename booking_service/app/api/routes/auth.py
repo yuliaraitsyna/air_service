@@ -27,11 +27,12 @@ def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Annota
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    access_token = create_access_token(user.username, user.id, timedelta(minutes=20))
+    access_token = create_access_token(user.username, user.id, user.role, timedelta(minutes=20))
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/check", response_model=UserResponse)
 def auth_check(current_user: Annotated[dict,  Depends(get_current_user)]):
+    print(current_user)
     if current_user is None:
         raise HTTPException(status_code=401, detail="Authentication failed")
     return  current_user

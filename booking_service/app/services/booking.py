@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from typing import Optional, List
-from datetime import date
+from typing import List
 
 from app.models.airplane import Airplane
 from app.models.airport import Airport
@@ -199,48 +198,48 @@ def delete_flight(db: Session, flight_id: int) -> None:
     db.delete(flight)
     db.commit()
 
-def search_flights(
-    db: Session,
-    from_airport_id: Optional[int] = None,
-    to_airport_id: Optional[int] = None,
-    departure_date: Optional[date] = None,
-    from_airport_code: Optional[str] = None,
-    to_airport_code: Optional[str] = None,
-    from_city: Optional[str] = None,
-    to_city: Optional[str] = None,
-    from_country: Optional[str] = None,
-    to_country: Optional[str] = None,
-    skip: int = 0,
-    limit: int = 100
-) -> List[Flight]:
-    query = db.query(Flight).join(
-        Airport, Flight.from_airport_id == Airport.id
-    ).join(
-        Airport, Flight.to_airport_id == Airport.id,
-        aliased=True
-    )
+# def search_flights(
+#     db: Session,
+#     from_airport_id: Optional[int] = None,
+#     to_airport_id: Optional[int] = None,
+#     departure_date: Optional[date] = None,
+#     from_airport_code: Optional[str] = None,
+#     to_airport_code: Optional[str] = None,
+#     from_city: Optional[str] = None,
+#     to_city: Optional[str] = None,
+#     from_country: Optional[str] = None,
+#     to_country: Optional[str] = None,
+#     skip: int = 0,
+#     limit: int = 100
+# ) -> List[Flight]:
+#     query = db.query(Flight).join(
+#         Airport, Flight.from_airport_id == Airport.id
+#     ).join(
+#         Airport, Flight.to_airport_id == Airport.id,
+#         aliased=True
+#     )
     
-    if from_airport_id:
-        query = query.filter(Flight.from_airport_id == from_airport_id)
-    if to_airport_id:
-        query = query.filter(Flight.to_airport_id == to_airport_id)
+#     if from_airport_id:
+#         query = query.filter(Flight.from_airport_id == from_airport_id)
+#     if to_airport_id:
+#         query = query.filter(Flight.to_airport_id == to_airport_id)
     
-    if departure_date:
-        query = query.filter(Flight.departure_time >= departure_date)
+#     if departure_date:
+#         query = query.filter(Flight.departure_time >= departure_date)
     
-    if from_airport_code:
-        query = query.filter(Airport.code.ilike(f"%{from_airport_code}%"))
-    if to_airport_code:
-        query = query.filter(Airport.code.ilike(f"%{to_airport_code}%"))
+#     if from_airport_code:
+#         query = query.filter(Airport.code.ilike(f"%{from_airport_code}%"))
+#     if to_airport_code:
+#         query = query.filter(Airport.code.ilike(f"%{to_airport_code}%"))
     
-    if from_city:
-        query = query.filter(Airport.city.ilike(f"%{from_city}%"))
-    if to_city:
-        query = query.filter(Airport.city.ilike(f"%{to_city}%"))
+#     if from_city:
+#         query = query.filter(Airport.city.ilike(f"%{from_city}%"))
+#     if to_city:
+#         query = query.filter(Airport.city.ilike(f"%{to_city}%"))
     
-    if from_country:
-        query = query.filter(Airport.country.ilike(f"%{from_country}%"))
-    if to_country:
-        query = query.filter(Airport.country.ilike(f"%{to_country}%"))
+#     if from_country:
+#         query = query.filter(Airport.country.ilike(f"%{from_country}%"))
+#     if to_country:
+#         query = query.filter(Airport.country.ilike(f"%{to_country}%"))
     
-    return query.offset(skip).limit(limit).all() 
+#     return query.offset(skip).limit(limit).all() 

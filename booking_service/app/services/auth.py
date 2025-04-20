@@ -72,18 +72,20 @@ def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         user_id: int = payload.get("id")
+        role: int = payload.get("role")
         
-        if username is None or user_id is None:
+        if username is None or user_id is None or role is None:
             raise HTTPException(status_code=401, detail="Invalid token")
 
-        return {"username" : username, "user_id": user_id}
+        return {"username": username, "user_id": user_id, "role": role}
     except (JWTError, ValueError):
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
 def require_role(required_roles: list[str]):
-    def role_checker(current_user: User = Depends(get_current_user)):
-        if current_user.role not in required_roles:
+    def role_checker(current_user: Annotated[User, Depends(get_current_user)]):
+        print(current_user)
+        if current_user["role"] not in required_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not have access to this resource."

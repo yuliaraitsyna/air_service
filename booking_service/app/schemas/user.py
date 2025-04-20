@@ -14,6 +14,7 @@ class UserBase(BaseModel):
 class UserResponse(BaseModel):
     username: str
     user_id: int
+    role: UserRole
 
 class Token(BaseModel):
     access_token: str
