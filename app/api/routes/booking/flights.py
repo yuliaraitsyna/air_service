@@ -5,7 +5,6 @@ from app.services.booking import (
     create_flight, get_flight, get_flights, update_flight, delete_flight
 )
 from typing import Annotated, List
-
 from app.schemas.flight import FlightCreate, FlightResponse, FlightUpdate
 from app.models.user import User
 from app.services.auth import require_role
@@ -15,52 +14,62 @@ router = APIRouter()
 db_annotated = Annotated[Session, Depends(get_db)]
 user_admin_annotated = Annotated[User, Depends(require_role(["admin"]))]
 
-@router.post("/flights/", response_model=FlightResponse)
+@router.post(
+    "/",
+    response_model=FlightResponse,
+    summary="Create a new flight",
+    description="""
+Create a new flight with details such as departure/arrival time, airport, and airplane ID.  
+Only users with the `admin` role can perform this operation.
+"""
+)
 def create_flight_endpoint(flight: FlightCreate, db: db_annotated, user: user_admin_annotated):
     return create_flight(db, flight)
 
-@router.get("/flights/", response_model=List[FlightResponse])
+@router.get(
+    "/",
+    response_model=List[FlightResponse],
+    summary="Retrieve all flights",
+    description="""
+Returns a paginated list of all available flights.  
+Use `skip` and `limit` query parameters to control pagination.
+"""
+)
 def get_flights_endpoint(db: db_annotated, skip: int = 0, limit: int = 100):
     return get_flights(db, skip, limit)
 
-@router.get("/flights/{flight_id}", response_model=FlightResponse)
+@router.get(
+    "/{flight_id}",
+    response_model=FlightResponse,
+    summary="Get flight by ID",
+    description="""
+Retrieve detailed information about a specific flight by its ID.
+"""
+)
 def get_flight_endpoint(flight_id: int, db: db_annotated):
     return get_flight(db, flight_id)
 
-@router.put("/flights/{flight_id}", response_model=FlightResponse)
+@router.put(
+    "/{flight_id}",
+    response_model=FlightResponse,
+    summary="Update flight details",
+    description="""
+Update fields of an existing flight by its ID.  
+Only users with the `admin` role can update flight details.  
+Only fields provided in the request will be updated.
+"""
+)
 def update_flight_endpoint(flight_id: int, flight: FlightUpdate, db: db_annotated, user: user_admin_annotated):
     return update_flight(db, flight_id, flight.model_dump(exclude_unset=True))
 
-@router.delete("/flights/{flight_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{flight_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a flight",
+    description="""
+Delete a flight by its ID.  
+Only users with the `admin` role can delete flights.
+"""
+)
 def delete_flight_endpoint(flight_id: int, db: db_annotated, user: user_admin_annotated):
     delete_flight(db, flight_id)
-
-# @router.get("/flights/search/", response_model=List[FlightResponse])
-# def search_flights_endpoint(
-#     from_airport_id: Optional[int] = None,
-#     to_airport_id: Optional[int] = None,
-#     departure_date: Optional[date] = None,
-#     from_airport_code: Optional[str] = None,
-#     to_airport_code: Optional[str] = None,
-#     from_city: Optional[str] = None,
-#     to_city: Optional[str] = None,
-#     from_country: Optional[str] = None,
-#     to_country: Optional[str] = None,
-#     skip: int = 0,
-#     limit: int = 100,
-#     db: Session = Depends(get_db)
-# ):
-#     return search_flights(
-#         db,
-#         from_airport_id=from_airport_id,
-#         to_airport_id=to_airport_id,
-#         departure_date=departure_date,
-#         from_airport_code=from_airport_code,
-#         to_airport_code=to_airport_code,
-#         from_city=from_city,
-#         to_city=to_city,
-#         from_country=from_country,
-#         to_country=to_country,
-#         skip=skip,
-#         limit=limit
-#     ) 
