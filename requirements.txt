@@ -1,0 +1,11 @@
+fastapi
+fastapi-users
+uvicorn
+pydantic
+SQLAlchemy
+asyncpg
+alembic
+python-dotenv
+passlib[bcrypt]
+pyjwt
+psycopg2-binary==2.9.10
