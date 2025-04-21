@@ -8,4 +8,4 @@ alembic
 python-dotenv
 passlib[bcrypt]
 pyjwt
-jose
+psycopg2-binary==2.9.10

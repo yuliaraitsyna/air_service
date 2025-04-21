@@ -1,10 +1,5 @@
-from typing import Annotated
-from fastapi import APIRouter, Depends
-from pytest import Session
+from fastapi import APIRouter
 
-from app.core.database import get_db
-from app.models.user import User
-from app.services.auth import require_role
 from . import payments, passengers, airplanes, airports, flights
 
 router = APIRouter()

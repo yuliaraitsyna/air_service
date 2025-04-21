@@ -1,12 +1,11 @@
 import os
 from typing import Annotated
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from app.models.user import User
 from fastapi import Depends, HTTPException, status
-from jose import JWTError, jwt
+import jwt
 
 from app.core.database import get_db
 from app.core.security import hash_password, verify_password
@@ -78,7 +77,7 @@ def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
             raise HTTPException(status_code=401, detail="Invalid token")
 
         return {"username": username, "user_id": user_id, "role": role}
-    except (JWTError, ValueError):
+    except (ValueError):
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
