@@ -6,14 +6,14 @@ class UserRole(str, Enum):
     user = "user"
 
 class UserBase(BaseModel):
-    user_id: int
+    id: int
     username: str
     email: EmailStr
     role: UserRole = "user"
 
 class UserResponse(BaseModel):
     username: str
-    user_id: int
+    id: int
     role: UserRole
 
 class Token(BaseModel):

@@ -4,14 +4,13 @@ from datetime import date
 
 class TicketBase(BaseModel):
     passenger_id: int
-    payment_id: Optional[int] = None
     flight_id: int
-    pricing_rule_id: Optional[int] = None
     seat_number: int
     with_luggage: bool = False
     price: float
     booked_at: date
     status: str
+    user_id: int
 
     @field_validator('seat_number')
     def check_seat_number(cls, value):
@@ -34,14 +33,13 @@ class TicketBase(BaseModel):
     class Config:
         orm_mode = True
 
-class TicketCreate(TicketBase):
-    pass
-
+class TicketCreate(BaseModel):
+    passenger_id: int
+    flight_id: int
+    with_luggage: bool
 class TicketUpdate(BaseModel):
     passenger_id: Optional[int] = None
-    payment_id: Optional[int] = None
     flight_id: Optional[int] = None
-    pricing_rule_id: Optional[int] = None
     seat_number: Optional[int] = None
     with_luggage: Optional[bool] = None
     price: Optional[float] = None

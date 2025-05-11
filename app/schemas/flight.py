@@ -11,6 +11,7 @@ class FlightBase(BaseModel):
     to_airport_id: int
     departure_time: datetime
     arrival_time: datetime
+    price: int
 
     @model_validator(mode="before")
     def check_different_airports(cls, values):
@@ -67,6 +68,7 @@ class FlightUpdate(BaseModel):
     to_airport_id: Optional[int] = None
     departure_time: Optional[datetime] = None
     arrival_time: Optional[datetime] = None
+    price: Optional[int] = None
 
     @field_validator('departure_time')
     @classmethod
@@ -113,6 +115,7 @@ class FlightResponse(BaseModel):
     to_airport: AirportResponse
     departure_time: datetime
     arrival_time: datetime
+    price: int
 
     class Config:
         from_attributes = True

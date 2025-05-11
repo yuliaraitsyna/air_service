@@ -11,6 +11,7 @@ class Flight(Base):
     to_airport_id = Column(Integer, ForeignKey("airports.id"), nullable=False)
     departure_time = Column(DateTime, nullable=False)
     arrival_time = Column(DateTime, nullable=False)
+    price = Column(Integer, nullable=False)
     
     airplane = relationship("Airplane")
     from_airport = relationship("Airport", foreign_keys=[from_airport_id])
