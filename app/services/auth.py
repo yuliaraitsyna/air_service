@@ -83,7 +83,6 @@ def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
 
 def require_role(required_roles: list[str]):
     def role_checker(current_user: Annotated[User, Depends(get_current_user)]):
-        print(current_user)
         if current_user["role"] not in required_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

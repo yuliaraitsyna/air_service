@@ -32,7 +32,6 @@ def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Annota
 
 @router.get("/check", response_model=UserResponse)
 def auth_check(current_user: Annotated[dict,  Depends(get_current_user)]):
-    print(current_user)
     if current_user is None:
         raise HTTPException(status_code=401, detail="Authentication failed")
     return  current_user
