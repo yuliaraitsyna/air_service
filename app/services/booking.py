@@ -1,3 +1,5 @@
+from datetime import date
+from random import randint
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from typing import List
@@ -6,16 +8,12 @@ from app.models.airplane import Airplane
 from app.models.airport import Airport
 from app.models.flight import Flight
 from app.models.passenger import Passenger
-from app.models.payment import Payment
+from app.models.ticket import Ticket
 from app.schemas.airplane import AirplaneCreate
 from app.schemas.airport import AirportCreate
 from app.schemas.flight import FlightCreate
 from app.schemas.passenger import PassengerCreate
-from app.schemas.payment import PaymentCreate
-
-class PaymentNotFoundException(HTTPException):
-    def __init__(self):
-        super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found")
+from app.schemas.ticket import TicketCreate
 
 class PassengerNotFoundException(HTTPException):
     def __init__(self):
@@ -32,36 +30,11 @@ class AirportNotFoundException(HTTPException):
 class FlightNotFoundException(HTTPException):
     def __init__(self):
         super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail="Flight not found")
-
-def create_payment(db: Session, payment: PaymentCreate) -> Payment:
-    db_payment = Payment(**payment.model_dump())
-    db.add(db_payment)
-    db.commit()
-    db.refresh(db_payment)
-    return db_payment
-
-def get_payment(db: Session, payment_id: int) -> Payment:
-    payment = db.query(Payment).filter(Payment.id == payment_id).first()
-    if not payment:
-        raise PaymentNotFoundException()
-    return payment
-
-def get_payments(db: Session, skip: int = 0, limit: int = 100) -> List[Payment]:
-    return db.query(Payment).offset(skip).limit(limit).all()
-
-def update_payment(db: Session, payment_id: int, payment_data: dict) -> Payment:
-    payment = get_payment(db, payment_id)
-    for key, value in payment_data.items():
-        setattr(payment, key, value)
-    db.commit()
-    db.refresh(payment)
-    return payment
-
-def delete_payment(db: Session, payment_id: int) -> None:
-    payment = get_payment(db, payment_id)
-    db.delete(payment)
-    db.commit()
-
+        
+class TicketsNotFoundException(HTTPException):
+    def __init__(self):
+        super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail="Tickets not found")
+        
 def create_passenger(db: Session, passenger: PassengerCreate) -> Passenger:
     db_passenger = Passenger(**passenger.model_dump())
     db.add(db_passenger)
@@ -161,7 +134,6 @@ def create_flight(db: Session, flight: FlightCreate) -> Flight:
         db.commit()
         db.refresh(db_flight)
     except Exception as e:
-        print("Error:", e)
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
     
@@ -198,48 +170,54 @@ def delete_flight(db: Session, flight_id: int) -> None:
     db.delete(flight)
     db.commit()
 
-# def search_flights(
-#     db: Session,
-#     from_airport_id: Optional[int] = None,
-#     to_airport_id: Optional[int] = None,
-#     departure_date: Optional[date] = None,
-#     from_airport_code: Optional[str] = None,
-#     to_airport_code: Optional[str] = None,
-#     from_city: Optional[str] = None,
-#     to_city: Optional[str] = None,
-#     from_country: Optional[str] = None,
-#     to_country: Optional[str] = None,
-#     skip: int = 0,
-#     limit: int = 100
-# ) -> List[Flight]:
-#     query = db.query(Flight).join(
-#         Airport, Flight.from_airport_id == Airport.id
-#     ).join(
-#         Airport, Flight.to_airport_id == Airport.id,
-#         aliased=True
-#     )
-    
-#     if from_airport_id:
-#         query = query.filter(Flight.from_airport_id == from_airport_id)
-#     if to_airport_id:
-#         query = query.filter(Flight.to_airport_id == to_airport_id)
-    
-#     if departure_date:
-#         query = query.filter(Flight.departure_time >= departure_date)
-    
-#     if from_airport_code:
-#         query = query.filter(Airport.code.ilike(f"%{from_airport_code}%"))
-#     if to_airport_code:
-#         query = query.filter(Airport.code.ilike(f"%{to_airport_code}%"))
-    
-#     if from_city:
-#         query = query.filter(Airport.city.ilike(f"%{from_city}%"))
-#     if to_city:
-#         query = query.filter(Airport.city.ilike(f"%{to_city}%"))
-    
-#     if from_country:
-#         query = query.filter(Airport.country.ilike(f"%{from_country}%"))
-#     if to_country:
-#         query = query.filter(Airport.country.ilike(f"%{to_country}%"))
-    
-#     return query.offset(skip).limit(limit).all() 
+def generate_free_seat(db: Session, flight_id: int) -> int:
+    used_seats = {t.seat_number for t in db.query(Ticket).filter_by(flight_id=flight_id).all()}
+    for _ in range(100):
+        seat = randint(1, 150)
+        if seat not in used_seats:
+            return seat
+    raise Exception("No free seats available")
+
+def calculate_price(flight: Flight, with_luggage: bool) -> float:
+    base_price = flight.price
+    if with_luggage:
+        return base_price + 20.0
+    return base_price
+
+def create_ticket(db: Session, data: TicketCreate, user_id: int) -> Ticket:
+    passenger = db.query(Passenger).get(data.passenger_id)
+    flight = db.query(Flight).get(data.flight_id)
+
+    if not passenger or not flight:
+        raise ValueError("Invalid passenger or flight")
+
+    seat_number = generate_free_seat(db, data.flight_id)
+    price = calculate_price(flight, data.with_luggage)
+
+    ticket = Ticket(
+        passenger_id=data.passenger_id,
+        flight_id=data.flight_id,
+        seat_number=seat_number,
+        with_luggage=data.with_luggage,
+        price=price,
+        booked_at=date.today(),
+        status="booked",
+        user_id = user_id
+    )
+
+    db.add(ticket)
+    db.commit()
+    db.refresh(ticket)
+    return ticket
+
+def get_tickets(db: Session, skip: int, limit: int):
+    tickets = db.query(Ticket).offset(skip).limit(limit).all()
+    if not tickets:
+        raise TicketsNotFoundException()
+    return tickets
+
+def get_ticket(db: Session, ticket_id: int):
+    ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
+    if not ticket:
+        raise TicketsNotFoundException()
+    return ticket
